@@ -19,9 +19,9 @@ export const createPreference = async (req: Request, res: Response, next: NextFu
     const preferenceData = {
       items,
       back_urls: {
-        success: "https://www.tu-sitio/success",
-        failure: "https://www.tu-sitio/failure",
-        pending: "https://www.tu-sitio/pending"
+        success: "http://localhost:5173/Payments/Success",
+        failure: "http://localhost:5173/Payments/Pending",
+        pending: "http://localhost:5173/Payments/Failure"
       },
       auto_return: "approved",
     };
