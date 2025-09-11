@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    /* Paths */
+    "rootDir": "./src",
+    "outDir": "./dist",
+
+    /* Entorno */
+    "target": "ES2022",             // más moderno (Node 18+ lo soporta)
+    "module": "NodeNext",           // usa ESM en Node
+    "moduleResolution": "NodeNext", // importante con ESM
+    "lib": ["ES2022"],              // sin DOM (solo backend)
+    "types": ["node"],
+
+    /* Outputs */
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+
+    /* Opciones estrictas */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    /* Estilo opcional */
+    // "noImplicitReturns": true,
+    // "noUnusedLocals": true,
+    // "noUnusedParameters": true,
+    // "noFallthroughCasesInSwitch": true,
+
+    /* Otros */
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}
