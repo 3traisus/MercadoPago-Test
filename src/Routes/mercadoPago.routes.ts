@@ -8,7 +8,7 @@ import { authMiddleware } from "../middlewares/auth.js";
 const mercadoPagoRouter = Router() as ReturnType<typeof Router>;
 
 mercadoPagoRouter.post('/create_preference', authMiddleware, createPreference);
-mercadoPagoRouter.post('/webHook', authMiddleware, WebHook);
+mercadoPagoRouter.post('/webHook', WebHook);
 
 
 export default mercadoPagoRouter;
