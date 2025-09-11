@@ -36,3 +36,11 @@ export const createPreference = async (req: Request, res: Response, next: NextFu
     res.status(500).json({ error: "Error al crear preferencia" });
   }
 };
+
+
+export const WebHook = async (req: Request, res: Response, next: NextFunction) => {
+  console.log("📩 Notificación recibida de Mercado Pago:", req.body);
+
+  // Siempre responde 200 a Mercado Pago para confirmar recepción
+  res.sendStatus(200);
+};
