@@ -19,9 +19,9 @@ export const createPreference = async (req: Request, res: Response, next: NextFu
     const preferenceData = {
       items,
       back_urls: {
-        success: "http://localhost:5173/Payments/Success",
-        failure: "http://localhost:5173/Payments/Pending",
-        pending: "http://localhost:5173/Payments/Failure"
+        success: process.env.BASE_URL+"/Payments/Success",
+        failure: process.env.BASE_URL+"/Payments/Pending",
+        pending: process.env.BASE_URL+"/Payments/Failure"
       },
       auto_return: "approved",
     };
