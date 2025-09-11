@@ -1,9 +1,6 @@
 // SDK de Mercado Pago
 import { Request, Response, NextFunction } from 'express';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
-// Agrega credenciales
-const client = new MercadoPagoConfig({ accessToken: process.env.ACCESSTOKEN_MERCADOPAGO! });
-const preference = new Preference(client);
 
 interface Item {
   id: string;
@@ -12,8 +9,15 @@ interface Item {
   unit_price: number;
 }
 
+// función que devuelve la instancia del client
+export const getMercadoPagoClient = () => {
+  const client = new MercadoPagoConfig({ accessToken: process.env.ACCESSTOKEN_MERCADOPAGO! });
+  return new Preference(client);
+};
+
 export const createPreference = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const preference = getMercadoPagoClient();
     const { items }: { items: Item[] } = req.body;
     console.log("items",items)
     const preferenceData = {
