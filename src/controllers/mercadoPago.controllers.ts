@@ -46,7 +46,7 @@ export const createPreference = async (req: Request, res: Response, next: NextFu
 
 
 export const WebHook = async (req: Request, res: Response, next: NextFunction) => {
-  console.log("📩 Notificación recibida de Mercado Pago:", req.body, "/", req.headers);
+  //console.log("📩 Notificación recibida de Mercado Pago:", req.body, "/", req.headers);
   try {
     const xSignature = req.headers["x-signature"] as string;
     const xRequestId = req.headers["x-request-id"] as string;
@@ -89,6 +89,7 @@ export const WebHook = async (req: Request, res: Response, next: NextFunction) =
         .update(manifest)
         .digest('hex');
 
+        console.log("cyphedSignature",cyphedSignature+"hash",hash)
     if (cyphedSignature === hash) {
       console.log("✅ Firma válida, procesando evento...");
       // Aquí puedes procesar la notificación (guardar pago, etc.)
