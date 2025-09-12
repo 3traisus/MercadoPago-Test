@@ -1,7 +1,7 @@
 // SDK de Mercado Pago
 import { Request, Response, NextFunction } from 'express';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
-
+import crypto from "crypto";
 interface Item {
   id: string;
   title:string,
@@ -84,7 +84,6 @@ export const WebHook = async (req: Request, res: Response, next: NextFunction) =
     const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
 
     // Crear el HMAC con sha256
-    const crypto = require('crypto');
     const cyphedSignature = crypto
         .createHmac('sha256', secret)
         .update(manifest)
