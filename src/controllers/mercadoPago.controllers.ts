@@ -52,13 +52,13 @@ try {
 
     const [tsPart, v1Part] = signature.split(",");
     const ts = tsPart!.split("=")[1];
-    const v1 = v1Part!.split("=")[1];
+    const hash = v1Part!.split("=")[1];
 
-    const data = `${req.body.id}:${req.body.live_mode}:${ts}`;
+    const data = `${req.body.id}:${req.headers["x-request-id"]}:${ts}`;
     const secret = process.env.MP_WEBHOOK_SECRET!; // tu Webhook Signing Secret
-    const hash = crypto.createHmac("sha256", secret).update(data).digest("hex");
+    const sha = crypto.createHmac("sha256", secret).update(data).digest("hex");
 
-    if (hash !== v1) {
+    if (sha === hash) {
       console.error("❌ Firma inválida, posible request no confiable");
       return res.status(401).send("Unauthorized");
     }
