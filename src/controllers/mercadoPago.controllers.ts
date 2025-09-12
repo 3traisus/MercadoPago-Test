@@ -11,7 +11,7 @@ interface Item {
 
 // función que devuelve la instancia del client
 export const getMercadoPagoClient = () => {
-  const client = new MercadoPagoConfig({ accessToken: process.env.ACCESSTOKEN_MERCADOPAGO! });
+  const client = new MercadoPagoConfig({ accessToken: process.env.ACCESSTOKEN_MERCADOPAGO_VENDEDOR! });
   return new Preference(client);
 };
 
