@@ -46,60 +46,27 @@ export const createPreference = async (req: Request, res: Response, next: NextFu
 
 
 export const WebHook = async (req: Request, res: Response, next: NextFunction) => {
-  //console.log("📩 Notificación recibida de Mercado Pago:", req.body, "/", req.headers);
-  try {
-    const xSignature = req.headers["x-signature"] as string;
-    const xRequestId = req.headers["x-request-id"] as string;
-    const dataId = req.query["data.id"] as string; // viene en query params de la URL
+try {
+    const signature = req.headers["x-signature"] as string;
+    if (!signature) throw new Error("Falta x-signature");
 
-    if (!xSignature || !xRequestId || !dataId) {
-      console.error("❌ Faltan datos en la cabecera o query");
-      return res.sendStatus(400);
-    }
+    const [tsPart, v1Part] = signature.split(",");
+    const ts = tsPart!.split("=")[1];
+    const v1 = v1Part!.split("=")[1];
 
-    // Separar la cabecera x-signature en partes
-    const parts = xSignature.split(",");
-    let ts: string | undefined;
-    let hash: string | undefined;
+    const data = `${req.body.id}:${req.body.live_mode}:${ts}`;
+    const secret = process.env.MP_WEBHOOK_SECRET!; // tu Webhook Signing Secret
+    const hash = crypto.createHmac("sha256", secret).update(data).digest("hex");
 
-    parts.forEach((part) => {
-      const [key, value] = part.split("=");
-      if (key && value) {
-        const trimmedKey = key.trim();
-        const trimmedValue = value.trim();
-        if (trimmedKey === "ts") ts = trimmedValue;
-        if (trimmedKey === "v1") hash = trimmedValue;
-      }
-    });
-
-    if (!ts || !hash) {
-      console.error("❌ Firma inválida, falta ts o v1");
-      return res.sendStatus(400);
-    }
-
-    // ⚠️ Usa tu "secret key" de Mercado Pago (NO el access token ni public key)
-    const secret = process.env.MP_WEBHOOK_SECRET!;
-
-    // Manifest string en el orden exacto
-    const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
-
-    // Crear el HMAC con sha256
-    const cyphedSignature = crypto
-        .createHmac('sha256', secret)
-        .update(manifest)
-        .digest('hex');
-
-        console.log("cyphedSignature",cyphedSignature+"hash",hash)
-    if (cyphedSignature === hash) {
-      console.log("✅ Firma válida, procesando evento...");
-      // Aquí puedes procesar la notificación (guardar pago, etc.)
-      res.sendStatus(200);
-    } else {
+    if (hash !== v1) {
       console.error("❌ Firma inválida, posible request no confiable");
-      res.sendStatus(401);
+      return res.status(401).send("Unauthorized");
     }
-  } catch (error) {
-    console.error("❌ Error en webhook:", error);
-    res.sendStatus(500);
+
+    console.log("✅ Webhook válido:", req.body);
+    res.sendStatus(200);
+  } catch (err) {
+    console.error("❌ Error en webhook:", err);
+    res.sendStatus(400);
   }
 };
