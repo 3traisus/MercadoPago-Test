@@ -58,6 +58,7 @@ try {
     const secret = process.env.MP_WEBHOOK_SECRET!; // tu Webhook Signing Secret
     const sha = crypto.createHmac("sha256", secret).update(data).digest("hex");
 
+    console.log("sha",sha,"hash",hash)
     if (sha === hash) {
       console.error("❌ Firma inválida, posible request no confiable");
       return res.status(401).send("Unauthorized");
