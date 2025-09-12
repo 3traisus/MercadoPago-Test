@@ -46,21 +46,27 @@ export const createPreference = async (req: Request, res: Response, next: NextFu
 
 
 export const WebHook = async (req: Request, res: Response, next: NextFunction) => {
-try {
+  try {
     const signature = req.headers["x-signature"] as string;
-    if (!signature) throw new Error("Falta x-signature");
+    const requestId = req.headers["x-request-id"] as string;
+    if (!signature || !requestId) throw new Error("Faltan headers");
 
     const [tsPart, v1Part] = signature.split(",");
-    const ts = tsPart!.split("=")[1];
-    const hash = v1Part!.split("=")[1];
+    const ts = tsPart?.split("=")[1];
+    const hash = v1Part?.split("=")[1];
+    if (!ts || !hash) throw new Error("Formato inválido en x-signature");
 
-    const data = `${req.body.id}:${req.headers["x-request-id"]}:${ts}`;
-    const secret = process.env.MP_WEBHOOK_SECRET!; // tu Webhook Signing Secret
+    // construye el manifest igual que en docs de MP
+    const data = `id:${req.body.data.id};request-id:${requestId};ts:${ts};`;
+    const secret = process.env.MP_WEBHOOK_SECRET!;
+
     const sha = crypto.createHmac("sha256", secret).update(data).digest("hex");
 
-    console.log("sha",sha,"hash",hash)
-    if ("8d83c414f1d733ad9a6f8b84508d2ed55c5a548b598d6c16282aa3707990198b" === hash) {
-      console.error("❌ Firma inválida, posible request no confiable");
+    console.log("🔑 Calculado:", sha);
+    console.log("🔑 Header:", hash);
+
+    if (sha !== hash) {
+      console.error("❌ Firma inválida, request no confiable");
       return res.status(401).send("Unauthorized");
     }
 
