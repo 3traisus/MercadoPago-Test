@@ -56,8 +56,11 @@ export const WebHook = async (req: Request, res: Response, next: NextFunction) =
     const hash = v1Part?.split("=")[1];
     if (!ts || !hash) throw new Error("Formato inválido en x-signature");
 
-    // construye el manifest igual que en docs de MP
-    const data = `id:${req.body.data.id};request-id:${requestId};ts:${ts};`;
+    // usar el campo correcto del body
+    const paymentId = req.body?.data?.id;
+    if (!paymentId) throw new Error("Falta payment id en el body");
+
+    const data = `id:${paymentId};request-id:${requestId};ts:${ts};`;
     const secret = process.env.MP_WEBHOOK_SECRET!;
 
     const sha = crypto.createHmac("sha256", secret).update(data).digest("hex");
