@@ -11,7 +11,7 @@ interface Item {
 
 // función que devuelve la instancia del client
 export const getMercadoPagoClient = () => {
-  const client = new MercadoPagoConfig({ accessToken: process.env.ACCESSTOKEN_MERCADOPAGO_VENDEDOR! });
+  const client = new MercadoPagoConfig({ accessToken: process.env.ACCESSTOKEN_MERCADOPAGO! });
   return new Preference(client);
 };
 
@@ -31,8 +31,11 @@ export const createPreference = async (req: Request, res: Response, next: NextFu
     };
 
     const response = await preference.create({
-      body: preferenceData,
-    });
+      body: 
+      {
+        ...preferenceData,
+        notification_url:"https://mercadopago-test-i4fs.onrender.com/api/mercado_pago/webHook"
+      }});
 
     res.json({ id: response.id });
   } catch (error) {
