@@ -47,7 +47,59 @@ export const createPreference = async (req: Request, res: Response, next: NextFu
 
 export const WebHook = async (req: Request, res: Response, next: NextFunction) => {
   console.log("📩 Notificación recibida de Mercado Pago:", req.body, "/", req.headers);
+  try {
+    const xSignature = req.headers["x-signature"] as string;
+    const xRequestId = req.headers["x-request-id"] as string;
+    const dataId = req.query["data.id"] as string; // viene en query params de la URL
 
-  // Siempre responde 200 a Mercado Pago para confirmar recepción
-  res.sendStatus(200);
+    if (!xSignature || !xRequestId || !dataId) {
+      console.error("❌ Faltan datos en la cabecera o query");
+      return res.sendStatus(400);
+    }
+
+    // Separar la cabecera x-signature en partes
+    const parts = xSignature.split(",");
+    let ts: string | undefined;
+    let hash: string | undefined;
+
+    parts.forEach((part) => {
+      const [key, value] = part.split("=");
+      if (key && value) {
+        const trimmedKey = key.trim();
+        const trimmedValue = value.trim();
+        if (trimmedKey === "ts") ts = trimmedValue;
+        if (trimmedKey === "v1") hash = trimmedValue;
+      }
+    });
+
+    if (!ts || !hash) {
+      console.error("❌ Firma inválida, falta ts o v1");
+      return res.sendStatus(400);
+    }
+
+    // ⚠️ Usa tu "secret key" de Mercado Pago (NO el access token ni public key)
+    const secret = process.env.MP_WEBHOOK_SECRET!;
+
+    // Manifest string en el orden exacto
+    const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
+
+    // Crear el HMAC con sha256
+    const crypto = require('crypto');
+    const cyphedSignature = crypto
+        .createHmac('sha256', secret)
+        .update(manifest)
+        .digest('hex');
+
+    if (cyphedSignature === hash) {
+      console.log("✅ Firma válida, procesando evento...");
+      // Aquí puedes procesar la notificación (guardar pago, etc.)
+      res.sendStatus(200);
+    } else {
+      console.error("❌ Firma inválida, posible request no confiable");
+      res.sendStatus(401);
+    }
+  } catch (error) {
+    console.error("❌ Error en webhook:", error);
+    res.sendStatus(500);
+  }
 };
