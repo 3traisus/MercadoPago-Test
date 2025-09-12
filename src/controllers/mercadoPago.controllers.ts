@@ -47,6 +47,25 @@ export const createPreference = async (req: Request, res: Response, next: NextFu
 
 export const WebHook = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    console.log("header",req.headers)
+    const signature = req.headers["x-signature"] as string;
+    const requestId = req.headers["x-request-id"] as string;
+    if (!signature || !requestId) throw new Error("Faltan headers");
+    const [tsPart, v1Part] = signature.split(",");
+    const ts = tsPart?.split("=")[1];
+    const hash = v1Part?.split("=")[1];
+    if (!ts || !hash) throw new Error("Formato inválido en x-signature");
+    const paymentId = req.body?.data?.id;
+    const data = `id:${paymentId};request-id:${requestId};ts:${ts};`;
+    console.log("data",data)
+  }catch(err){
+        console.error("❌ Error en webhook:", err);
+    res.sendStatus(400);
+  }
+};
+
+
+/*
     const signature = req.headers["x-signature"] as string;
     const requestId = req.headers["x-request-id"] as string;
     if (!signature || !requestId) throw new Error("Faltan headers");
@@ -78,5 +97,4 @@ export const WebHook = async (req: Request, res: Response, next: NextFunction) =
   } catch (err) {
     console.error("❌ Error en webhook:", err);
     res.sendStatus(400);
-  }
-};
+*/
