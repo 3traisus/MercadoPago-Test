@@ -58,6 +58,20 @@ export const WebHook = async (req: Request, res: Response, next: NextFunction) =
     const paymentId = req.body?.data?.id;
     const data = `id:${paymentId};request-id:${requestId};ts:${ts};`;
     console.log("data",data)
+
+    const secret = process.env.MP_WEBHOOK_SECRET!;
+    const sha = crypto.createHmac("sha256", secret).update(data).digest("hex");
+
+    console.log("🔑 Calculado:", sha);
+    console.log("🔑 Header:", hash);
+
+    if (sha !== hash) {
+      console.error("❌ Firma inválida, request no confiable");
+      return res.status(401).send("Unauthorized");
+    }
+
+    console.log("✅ Webhook válido:", req.body);
+    res.sendStatus(200);
   }catch(err){
         console.error("❌ Error en webhook:", err);
     res.sendStatus(400);
