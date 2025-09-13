@@ -45,36 +45,64 @@ export const createPreference = async (req: Request, res: Response, next: NextFu
 };
 
 
-export const WebHook = async (req: Request, res: Response, next: NextFunction) => {
+export const WebHook = async (req: Request, res: Response) => {
   try {
-    console.log("header",req.headers,"body",req.body)
+    console.log("📩 Headers:", req.headers);
+    console.log("📩 Query:", req.query);
+    console.log("📩 Body:", req.body);
+
     const signature = req.headers["x-signature"] as string;
     const requestId = req.headers["x-request-id"] as string;
-    if (!signature || !requestId) throw new Error("Faltan headers");
+
+    if (!signature || !requestId) {
+      console.error("❌ Faltan headers requeridos");
+      return res.status(400).send("Bad Request");
+    }
+
+    // Extraer ts y hash desde la firma
     const [tsPart, v1Part] = signature.split(",");
     const ts = tsPart?.split("=")[1];
     const hash = v1Part?.split("=")[1];
-    if (!ts || !hash) throw new Error("Formato inválido en x-signature");
-    const paymentId = (req.query["data.id"] as string) || req.body?.data?.id;
-    const data = `id:${paymentId};request-id:${requestId};ts:${ts};`;
-    console.log("data",data)
 
+    if (!ts || !hash) {
+      console.error("❌ Formato inválido en x-signature");
+      return res.status(400).send("Bad Request");
+    }
+
+    // El ID debe venir de la query: data.id
+    const dataId = req.query["data.id"] as string;
+    if (!dataId) {
+      console.error("❌ Falta data.id en query");
+      return res.status(400).send("Bad Request");
+    }
+
+    // Construir manifest
+    const manifest = `id:${dataId};request-id:${requestId};ts:${ts};`;
+    console.log("📝 Manifest generado:", manifest);
+
+    // Calcular firma HMAC
     const secret = process.env.MP_WEBHOOK_SECRET!;
-    const sha = crypto.createHmac("sha256", secret).update(data).digest("hex");
+    const sha = crypto.createHmac("sha256", secret).update(manifest).digest("hex");
 
     console.log("🔑 Calculado:", sha);
     console.log("🔑 Header:", hash);
 
+    // Comparar firmas
     if (sha !== hash) {
       console.error("❌ Firma inválida, request no confiable");
       return res.status(401).send("Unauthorized");
     }
 
-    console.log("✅ Webhook válido:", req.body);
+    // ✅ Webhook válido
+    console.log("✅ Webhook válido:", {
+      query: req.query,
+      body: req.body,
+    });
+
     res.sendStatus(200);
-  }catch(err){
-        console.error("❌ Error en webhook:", err);
-    res.sendStatus(400);
+  } catch (err) {
+    console.error("❌ Error en webhook:", err);
+    res.sendStatus(500);
   }
 };
 
