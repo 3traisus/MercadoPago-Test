@@ -55,7 +55,7 @@ export const WebHook = async (req: Request, res: Response, next: NextFunction) =
     const ts = tsPart?.split("=")[1];
     const hash = v1Part?.split("=")[1];
     if (!ts || !hash) throw new Error("Formato inválido en x-signature");
-    const paymentId = req.body?.data?.id;
+    const paymentId = (req.query["data.id"] as string) || req.body?.data?.id;
     const data = `id:${paymentId};request-id:${requestId};ts:${ts};`;
     console.log("data",data)
 
