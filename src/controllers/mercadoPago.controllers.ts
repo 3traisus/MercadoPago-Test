@@ -47,7 +47,7 @@ export const createPreference = async (req: Request, res: Response, next: NextFu
 
 export const WebHook = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    console.log("header",req.headers)
+    console.log("header",req.headers,"body",req.body)
     const signature = req.headers["x-signature"] as string;
     const requestId = req.headers["x-request-id"] as string;
     if (!signature || !requestId) throw new Error("Faltan headers");
