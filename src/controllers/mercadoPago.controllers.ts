@@ -47,62 +47,45 @@ export const createPreference = async (req: Request, res: Response, next: NextFu
 
 export const WebHook = async (req: Request, res: Response) => {
   try {
-    console.log("📩 Headers:", req.headers);
-    console.log("📩 Query:", req.query);
-    console.log("📩 Body:", req.body);
-
+    const secret = process.env.MP_WEBHOOK_SECRET || ""; // misma clave que configuraste en Mercado Pago
     const signature = req.headers["x-signature"] as string;
     const requestId = req.headers["x-request-id"] as string;
 
     if (!signature || !requestId) {
-      console.error("❌ Faltan headers requeridos");
-      return res.status(400).send("Bad Request");
+      return res.status(401).json({ valid: false, reason: "missing headers" });
     }
 
-    // Extraer ts y hash desde la firma
+    // La firma llega en el formato: ts=...,v1=...
+    // Ejemplo: "ts=1736868433,v1=sha256=abcd1234..."
     const [tsPart, v1Part] = signature.split(",");
-    const ts = tsPart?.split("=")[1];
-    const hash = v1Part?.split("=")[1];
+    const ts = tsPart!.split("=")[1];
+    const signatureHash = v1Part!.split("=")[1];
 
-    if (!ts || !hash) {
-      console.error("❌ Formato inválido en x-signature");
-      return res.status(400).send("Bad Request");
-    }
-
-    // El ID debe venir de la query: data.id
-    const dataId = req.query["data.id"] as string;
+    // Extraemos el data.id desde los query params
+    const dataId = (req.query["data.id"] as string)?.toLowerCase(); // si es alfanumérico, debe ir en minúsculas
     if (!dataId) {
-      console.error("❌ Falta data.id en query");
-      return res.status(400).send("Bad Request");
+      return res.status(401).json({ valid: false, reason: "missing data.id" });
     }
 
-    // Construir manifest
-    const manifest = `id:${dataId};request-id:${requestId};ts:${ts};`;
-    console.log("📝 Manifest generado:", manifest);
+    // Construimos el template exacto que Mercado Pago espera
+    const template = `id:${dataId};request-id:${requestId};ts:${ts};`;
 
-    // Calcular firma HMAC
-    const secret = process.env.MP_WEBHOOK_SECRET!;
-    const sha = crypto.createHmac("sha256", secret).update(manifest).digest("hex");
+    // Calculamos el hash esperado
+    const expectedHash = crypto
+      .createHmac("sha256", secret)
+      .update(template)
+      .digest("hex");
 
-    console.log("🔑 Calculado:", sha);
-    console.log("🔑 Header:", hash);
-
-    // Comparar firmas
-    if (sha !== hash) {
-      console.error("❌ Firma inválida, request no confiable");
-      return res.status(401).send("Unauthorized");
+    if (signatureHash === expectedHash) {
+      console.log("✅ Webhook válido:", req.body);
+      return res.status(200).json({ valid: true });
+    } else {
+      console.log("❌ Firma inválida");
+      return res.status(401).json({ valid: false });
     }
-
-    // ✅ Webhook válido
-    console.log("✅ Webhook válido:", {
-      query: req.query,
-      body: req.body,
-    });
-
-    res.sendStatus(200);
   } catch (err) {
-    console.error("❌ Error en webhook:", err);
-    res.sendStatus(500);
+    console.error("Error en webhook:", err);
+    return res.status(500).json({ valid: false, error: "internal error" });
   }
 };
 
